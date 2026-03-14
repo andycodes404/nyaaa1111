@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HBD Nyaaa 🎂</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0c0c0d;
+            --accent: #ff375f;
+            --text-main: #ffffff;
+            --text-dim: #8e8e93;
+            --glass-bg: rgba(28, 28, 30, 0.85);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Welcome Overlay (To bypass Autoplay block) --- */
+        #welcome-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-color);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        #welcome-overlay.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .enter-btn {
+            padding: 15px 40px;
+            border-radius: 30px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(255, 55, 95, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .enter-btn:active { transform: scale(0.95); }
+
+        /* --- Audio Toggle --- */
+        .audio-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .audio-control svg { width: 20px; height: 20px; fill: white; }
+
+        /* --- Background & Animation --- */
+        .bokeh-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+        }
+
+        .orb {
+            position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.3;
+            animation: float 15s infinite alternate ease-in-out;
+        }
+        .orb-1 { width: 300px; height: 300px; background: #0071e3; top: -10%; left: -10%; }
+        .orb-2 { width: 350px; height: 350px; background: #af52de; bottom: -5%; right: -5%; }
+        .orb-3 { width: 200px; height: 200px; background: #ff375f; top: 20%; right: 10%; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 30px) scale(1.1); }
+        }
+
+        /* --- Content --- */
+        .header-section {
+            padding: 80px 20px 30px;
+            width: 100%;
+            max-width: 600px;
+            min-height: 280px;
+            text-align: center;
+        }
+
+        #typewriter {
+            font-size: clamp(1.1rem, 4.5vw, 1.6rem); 
+            font-weight: 500;
+            line-height: 1.8;
+            letter-spacing: -0.01em;
+            display: inline-block;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.4rem;
+            background-color: var(--accent);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        #card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            width: 100%;
+            padding: 0 24px 80px;
+            max-width: 700px;
+            opacity: 0;
+            transform: translateY(25px);
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #card-container.show { opacity: 1; transform: translateY(0); }
+
+        .card {
+            background: #1c1c1e;
+            aspect-ratio: 3/4;
+            border-radius: 18px;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            transition: opacity 0.8s ease;
+        }
+
+        .overlay h3 { font-size: 0.9rem; font-weight: 500; margin: 0; }
+        .card.revealed .overlay { opacity: 0; pointer-events: none; }
+        .photo { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); transition: transform 1s ease; }
+        .card.revealed .photo { transform: scale(1); }
+
+        @media (max-width: 400px) {
+            #card-container { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-overlay">
+        <button class="enter-btn" onclick="startExperience()">Open Your Surprise 🎁</button>
+    </div>
+
+    <audio id="bday-music" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="audio-control" onclick="toggleMusic()">
+        <svg id="play-icon" viewBox="0 0 24 24" style="display:none;"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    </div>
+
+    <div class="bokeh-container">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <section class="header-section">
+        <span id="typewriter"></span><span class="cursor" id="cursor"></span>
+    </section>
+
+    <div id="card-container">
+        <div class="card" onclick="reveal(this)">
+            <div class="overlay"><h3>Tap to Reveal</h3></div>
+            <img src="images/photo1.jpeg" class="photo" loading="lazy">
+        </div>
+        <div class="card" onclick="reveal(this)">
+            <div class="overlay"><h3>Tap to Reveal</h3></div>
+            <img src="images/photo2.jpeg" class="photo" loading="lazy">
+        </div>
+        <div class="card" onclick="reveal(this)">
+            <div class="overlay"><h3>Tap to Reveal</h3></div>
+            <img src="images/photo3.jpeg" class="photo" loading="lazy">
+        </div>
+    </div>
+
+    <script>
+        const music = document.getElementById('bday-music');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const overlay = document.getElementById('welcome-overlay');
+
+        function startExperience() {
+            overlay.classList.add('hide');
+            music.play();
+            setTimeout(type, 1000); // Starts typing 1s after clicking open
+        }
+
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+            } else {
+                music.pause();
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+            }
+        }
+
+        const lines = [
+            "🎈 Happy Birthdayyy Nyaaaa 🎈",
+            "Thank you for always being there for me",
+            "I absolutely love what we have",
+            "And I will always be by your side",
+            "Have an amazing year ilyy",
+            "~your greatest hb :3"
+        ];
+
+        const typeElement = document.getElementById("typewriter");
+        const cardContainer = document.getElementById("card-container");
+        const cursor = document.getElementById("cursor");
+        let lineIdx = 0;
+        let charIdx = 0;
+
+        function type() {
+            if (lineIdx < lines.length) {
+                if (charIdx < lines[lineIdx].length) {
+                    typeElement.innerHTML += lines[lineIdx].charAt(charIdx);
+                    charIdx++;
+                    setTimeout(type, 55); 
+                } else {
+                    typeElement.innerHTML += "<br>";
+                    lineIdx++;
+                    charIdx = 0;
+                    setTimeout(type, 850); 
+                }
+            } else {
+                cursor.style.display = 'none';
+                setTimeout(() => { cardContainer.classList.add('show'); }, 400);
+            }
+        }
+
+        function reveal(card) {
+            if (!card.classList.contains('revealed')) {
+                card.classList.add('revealed');
+                const rect = card.getBoundingClientRect();
+                confetti({
+                    particleCount: 50,
+                    spread: 55,
+                    origin: { 
+                        x: (rect.left + rect.width / 2) / window.innerWidth,
+                        y: (rect.top + rect.height / 2) / window.innerHeight 
+                    },
+                    colors: ['#ff375f', '#0071e3', '#ffffff']
+                });
+            }
+        }
+    </script>
+</body>
+</html>
